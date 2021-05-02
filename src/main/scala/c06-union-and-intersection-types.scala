@@ -50,6 +50,20 @@ object UnionTypes:
 // Exercise 1: Model a PaymentAuthorizationError ADT from Chapter 3 (enums) using a union type.
 // What pros/cons do you see when you use a union type vs enums in modeling ADTs?
 //
+//enum PaymentAuthorizationError(retriable: Boolean):
+case class IllegalPaymentStatus(existingPaymentId: PaymentId, existingPaymentStatus: PaymentStatus) {
+  val retriable: Boolean = false
+}
+case class IllegalRequestData(reason: String) {
+  val retriable: Boolean = false
+}
+case class CustomerUnknown(unknownCustomerId: CustomerId) {
+  val retriable: Boolean = false
+}
+case class InvalidToken(invalidToken: Token) {
+  val retriable: Boolean = true
+}
+type PaymentAuthorizationError = IllegalPaymentStatus | IllegalRequestData | CustomerUnknown | InvalidToken
 
 object IntersectionTypes:
   /**
@@ -100,6 +114,16 @@ object IntersectionTypes:
     override def f: Boolean
   trait B extends Foo:
     override def f: AnyVal
+
+/**
+ * In Scala 2
+ * :type (???: A with B).f - Boolean
+ * :type (???: B with A).f - AnyVal
+ *
+ * In Scala 3
+ * :type (???: A & B).f - Boolean & AnyVal
+ * :type (???: B & A).f - AnyVal & Boolean
+ */
 
 // btw. there's a nice talk by Dean Wampler that thoroughly explains
 // all the properties of union and intersection types: https://youtu.be/8H9KPlGSBnM?t=1270

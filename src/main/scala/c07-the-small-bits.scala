@@ -28,12 +28,17 @@ def topLevelDefinitions =
  * [] CanEqual type class using derives or given
  */
 object StrictEquality:
-  case class A(text: String)
-  case class B(number: Int)
+  import scala.language.strictEquality
+  case class A(text: String) derives CanEqual
+  case class B(number: Int) derives CanEqual
+
+  given CanEqual[A, B] = CanEqual.derived
+  given CanEqual[B, A] = CanEqual.derived
 
   // Both are compiling fine!
   A("") == A("")
   A("") == B(10)
+  B(10) == A("")
 
 /**
  * Example 4: 22 limit is dropped

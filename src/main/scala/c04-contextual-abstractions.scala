@@ -63,11 +63,15 @@ object ImplicitParams:
   // Hint: You can use java.time.Duration.between(one, two).
   import java.time.* // In Scala 3 `*` is the wildcard import and not `_` anymore.
 
+  extension (value: Instant) def -(until: Instant) = java.time.Duration.between(value, until)
+
 // The following should compile:
-// println(Instant.now() - Instant.now())
+  println(Instant.now() - Instant.now())
 
 // Exercise 2: Implement def +(thatTuple: Tuple2[A, B]) function on the Tuple2
 // Hint: Use the Numeric type class (https://www.scala-lang.org/api/current/scala/math/Numeric.html).
+  import scala.math.Numeric.Implicits.*
+  extension [A: Numeric, B: Numeric](value: (A, B)) def +(that: (A, B)) = (value._1 + that._1, value._2 + that._2)
 
 // The following should compile:
 // println((2, 2.1) + (3, 4.0)) // result: (5, 6.1)
@@ -81,19 +85,18 @@ object Typeclasses:
   case class Data(field: String)
 
   // 1. Type class declaration
-  trait Show[A] {
-    def show(a: A): String
-  }
+  trait Show[A]:
+    extension(a: A) def show: String
 
   // 2. Type class instance for the custom data type
-  implicit val dataShow: Show[Data] = new Show[Data] { // or implicit object...
-    override def show(data: Data): String = s"Data(field = ${data.field})"
-  }
+  // given Show[Data] with
+  //   def show(data: Data): String = s"Data(field = ${data.field})"
+  given Show[Data] with
+    extension(data: Data) override def show: String = s"Data(field = ${data.field})"
 
   // 3. Interface w/ summoner
-  object Show {
+  object Show:
     def show[A](a: A)(implicit ev: Show[A]): String = ev.show(a)
-  }
 
   // 4. Syntax
   implicit class ShowOps[A](a: A)(implicit ev: Show[A]) {
@@ -101,7 +104,7 @@ object Typeclasses:
   }
 
   // 5. Usage
-  def usage[A: Show](a: A) = ???
+  def usage[A: Show](a: A) = a.show
 
 // 6. Derivation
 
@@ -112,10 +115,16 @@ object TypeclassesExercises:
   // Exercise 1. For the following Monad type class declaration implement:
   // - instance for Option
   // - syntax
+  // trait Monad[F[_]]:
+  //   def bind[A, B](fa: F[A])(f: A => F[B]): F[B]
+  //   def unit[A](x: A): F[A]
   trait Monad[F[_]]:
-    def bind[A, B](fa: F[A])(f: A => F[B]): F[B]
-    def unit[A](x: A): F[A]
-  ???
+    extension[A](fa: F[A]) def bind[B](f: A => F[B]): F[B]
+    extension [A](a: A) def unit: F[A]
+
+  given Monad[Option] with
+    extension[A](fa: Option[A]) override def bind[B](f: A => Option[B]): Option[B] = fa.flatMap(f)
+    extension [A](a: A) override def unit: Option[A] = Some(a)
 
 /**
  * Chapter 3.4: Implicit conversions
